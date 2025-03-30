@@ -1,10 +1,24 @@
+import os
 from typing import Any, Union
 
+import httpx
 from langchain_core.runnables import RunnableConfig
+from langchain_openai import ChatOpenAI
 from scrapybara import Scrapybara
 from scrapybara.client import BrowserInstance, UbuntuInstance, WindowsInstance
 
 from .types import get_configuration_with_defaults
+
+
+def create_model(**kwargs):
+    proxy = os.getenv("PROJECT_PROXY")
+    http_client = httpx.Client(
+        proxy=proxy
+    )
+    http_async_client = httpx.AsyncClient(
+        proxy=proxy
+    )
+    return ChatOpenAI(http_client=http_client, http_async_client=http_async_client, **kwargs)
 
 
 def get_scrapybara_client(api_key: str) -> Scrapybara:
@@ -27,7 +41,7 @@ def get_scrapybara_client(api_key: str) -> Scrapybara:
 
 
 def get_instance(
-    id: str, config: RunnableConfig
+        id: str, config: RunnableConfig
 ) -> Union[UbuntuInstance, BrowserInstance, WindowsInstance]:
     """
     Gets an instance by its ID from Scrapybara.

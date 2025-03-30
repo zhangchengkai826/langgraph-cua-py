@@ -7,12 +7,12 @@ from typing import List, Literal
 
 from dotenv import load_dotenv
 from langchain_core.messages import AnyMessage
-from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
 
 from langgraph_cua import create_cua
 from langgraph_cua.types import CUAState
+from langgraph_cua.utils import create_model
 
 # Load environment variables from .env file
 load_dotenv()
@@ -41,9 +41,9 @@ def process_input(state: PriceFinderState):
     system_message = {
         "role": "system",
         "content": (
-            "You're an advanced AI assistant tasked with routing the user's query to the appropriate node."
-            + "Your options are: computer use or respond. You should pick computer use if the user's request requires "
-            + "using a computer (e.g. looking up a price on a website), and pick respond for ANY other inputs."
+                "You're an advanced AI assistant tasked with routing the user's query to the appropriate node."
+                + "Your options are: computer use or respond. You should pick computer use if the user's request requires "
+                + "using a computer (e.g. looking up a price on a website), and pick respond for ANY other inputs."
         ),
     }
 
@@ -55,7 +55,7 @@ def process_input(state: PriceFinderState):
             description="The node to route to, either 'computer_use_agent' for any input which might require using a computer to assist the user, or 'respond' for any other input",
         )
 
-    model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    model = create_model(model="gpt-4o-mini", temperature=0)
     model_with_tools = model.with_structured_output(RoutingToolSchema)
 
     messages = [system_message, {"role": "user", "content": state.get("messages")[-1].content}]
@@ -82,20 +82,20 @@ def respond(state: PriceFinderState):
     system_message = {
         "role": "system",
         "content": (
-            "You're an advanced AI assistant tasked with responding to the user's input."
-            + "You're provided with the full conversation between the user, and the AI assistant. "
-            + "This conversation may include messages from a computer use agent, along with "
-            + "general user inputs and AI responses. \n\n"
-            + "Given all of this, please RESPOND to the user. If there is nothing to respond to, you may return something like 'Let me know if you have any other questions.'"
+                "You're an advanced AI assistant tasked with responding to the user's input."
+                + "You're provided with the full conversation between the user, and the AI assistant. "
+                + "This conversation may include messages from a computer use agent, along with "
+                + "general user inputs and AI responses. \n\n"
+                + "Given all of this, please RESPOND to the user. If there is nothing to respond to, you may return something like 'Let me know if you have any other questions.'"
         ),
     }
     human_message = {
         "role": "user",
         "content": "Here are all of the messages in the conversation:\n\n"
-        + format_messages(state.get("messages")),
+                   + format_messages(state.get("messages")),
     }
 
-    model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    model = create_model(model="gpt-4o-mini", temperature=0)
 
     response = model.invoke([system_message, human_message])
     return {"response": response}

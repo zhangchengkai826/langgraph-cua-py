@@ -2,9 +2,9 @@ from typing import Any, Dict, Optional, Union
 
 from langchain_core.messages import AIMessageChunk, SystemMessage
 from langchain_core.runnables.config import RunnableConfig
-from langchain_openai import ChatOpenAI
 
 from ..types import CUAState, get_configuration_with_defaults
+from ..utils import create_model
 
 
 def get_openai_env_from_state_env(env: str) -> str:
@@ -63,13 +63,13 @@ async def call_model(state: CUAState, config: RunnableConfig) -> Dict[str, Any]:
     if last_message and getattr(last_message, "type", None) == "tool" and zdr_enabled is False:
         # If it's a tool message, check if the second-to-last message is an AI message
         if (
-            len(messages) >= 2
-            and getattr(messages[-2], "type", None) == "ai"
-            and hasattr(messages[-2], "response_metadata")
+                len(messages) >= 2
+                and getattr(messages[-2], "type", None) == "ai"
+                and hasattr(messages[-2], "response_metadata")
         ):
             previous_response_id = messages[-2].response_metadata["id"]
 
-    llm = ChatOpenAI(
+    llm = create_model(
         model="computer-use-preview",
         model_kwargs={"truncation": "auto", "previous_response_id": previous_response_id},
     )
